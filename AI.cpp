@@ -199,14 +199,13 @@ string getAIMoveString(const BuildingState& buildingState) {
     }
 
     int elevatorToService = chooseElevator(buildingState, floorToGo);
-    //int elevatorToPickup = chooseElevator(buildingState, floorToGo);
 
     if (allElevatorsInServcing(buildingState) ||
         noPeople(buildingState)) {
         return "";
     }
 
-    for (int i = 0; i < 3; i++) {
+    for (int i = 0; i < NUM_ELEVATORS; i++) {
         if (!buildingState.elevators[i].isServicing &&
             (buildingState.floors[buildingState.elevators[i].currentFloor].numPeople > 0)) {
             string pickupString = "e" + 
@@ -214,14 +213,6 @@ string getAIMoveString(const BuildingState& buildingState) {
                 "p";
             return pickupString;
         }
-    }
-
-    if (buildingState.floors[buildingState.elevators[elevatorToService].currentFloor].numPeople > 0 &&
-        buildingState.elevators[elevatorToService].currentFloor == floorToGo) {
-        string pickupMoveString = "e" +
-            to_string(elevatorToService) +
-            "p";
-        return pickupMoveString;
     }
 
     if (buildingState.elevators[elevatorToService].currentFloor != floorToGo) {
@@ -232,7 +223,13 @@ string getAIMoveString(const BuildingState& buildingState) {
         return serviceString;
     }
 
-
+    if (buildingState.floors[buildingState.elevators[elevatorToService].currentFloor].numPeople > 0 &&
+        buildingState.elevators[elevatorToService].currentFloor == floorToGo) {
+        string pickupMoveString = "e" +
+            to_string(elevatorToService) +
+            "p";
+        return pickupMoveString;
+    }
 
     return "";
 }
