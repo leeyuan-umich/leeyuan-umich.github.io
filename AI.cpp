@@ -215,20 +215,20 @@ string getAIMoveString(const BuildingState& buildingState) {
         }
     }
 
-    if (buildingState.elevators[elevatorToService].currentFloor != floorToGo) {
-        string serviceString = "e" +
-            to_string(elevatorToService) +
-            "f" +
-            to_string(floorToGo);
-        return serviceString;
-    }
-
     if (buildingState.floors[buildingState.elevators[elevatorToService].currentFloor].numPeople > 0 &&
         buildingState.elevators[elevatorToService].currentFloor == floorToGo) {
         string pickupMoveString = "e" +
             to_string(elevatorToService) +
             "p";
         return pickupMoveString;
+    }
+    
+    if (buildingState.elevators[elevatorToService].currentFloor != floorToGo) {
+        string serviceString = "e" +
+            to_string(elevatorToService) +
+            "f" +
+            to_string(floorToGo);
+        return serviceString;
     }
 
     return "";
