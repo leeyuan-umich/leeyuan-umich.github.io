@@ -103,8 +103,8 @@ double angerSD(const BuildingState building) {
     double average = angerAVG(building);
     for (int i = 0; i < NUM_FLOORS; i++) {
         for (int j = 0; j < building.floors[i].numPeople; j++) {
-            variance = variance + ((building.floors[i].people[j].angerLevel - average) * 
-                                   (building.floors[i].people[j].angerLevel - average));
+            variance = variance + ((building.floors[i].people[j].angerLevel - average) *
+                (building.floors[i].people[j].angerLevel - average));
         }
     }
     SD = sqrt(variance / numPeopleWaiting(building));
@@ -127,7 +127,7 @@ double floorSD(const BuildingState building) {
     double average = floorAVG(building);
     for (int i = 0; i < NUM_FLOORS; i++) {
         variance = variance + ((building.floors[i].numPeople - average) *
-                               (building.floors[i].numPeople - average));
+            (building.floors[i].numPeople - average));
     }
     SD = sqrt(variance / numFloorHasPeople(building));
     return SD;
@@ -168,23 +168,8 @@ int chooseElevator(const BuildingState building, int targetFloor) {
     int findFloor = NUM_FLOORS;
     for (int i = 0; i < NUM_ELEVATORS; i++) {
         if (!building.elevators[i].isServicing) {
-            if ((floorWithMostPeople(building) == floorWithMostAnger(building)) ||
-               (abs(tscore(building, angerSD(building), angerAVG(building),
-                   sumAngerInFloorWithMostAnger(building), numPeopleWaiting(building))) ==
-                   abs(tscore(building, floorSD(building), floorSD(building),
-                       building.floors[floorWithMostAnger(building)].numPeople, NUM_FLOORS)))) {
-                elevatorIndex = i;
-            }
-            else if (abs(tscore(building, angerSD(building), angerAVG(building),
-                            sumAngerInFloorWithMostAnger(building), numPeopleWaiting(building))) >
-                     abs(tscore(building, floorSD(building), floorSD(building),
-                            building.floors[floorWithMostAnger(building)].numPeople, NUM_FLOORS))) {
-                elevatorIndex = i;
-            }
-            else if (abs(tscore(building, angerSD(building), angerAVG(building),
-                            sumAngerInFloorWithMostAnger(building), numPeopleWaiting(building))) <
-                     abs(tscore(building, floorSD(building), floorSD(building),
-                            building.floors[floorWithMostAnger(building)].numPeople, NUM_FLOORS))) {
+            if (abs(building.elevators[i].currentFloor - targetFloor) < findFloor) {
+                findFloor = abs(building.elevators[i].currentFloor - (targetFloor));
                 elevatorIndex = i;
             }
         }
@@ -193,29 +178,48 @@ int chooseElevator(const BuildingState building, int targetFloor) {
 }
 
 string getAIMoveString(const BuildingState& buildingState) {
-    int floorToGo = floorWithMostAnger(buildingState);
+    int floorToGo;
+    if (floorWithMostPeople(buildingState) == floorWithMostAnger(buildingState)) {
+        floorToGo = floorWithMostAnger(buildingState);
+    }
+    else if (tscore(buildingState, angerSD(buildingState), angerAVG(buildingState),
+                    sumAngerInFloorWithMostAnger(buildingState), numPeopleWaiting(buildingState)) >
+             tscore(buildingState, floorSD(buildingState), floorAVG(buildingState),
+                    buildingState.floors[floorWithMostAnger(buildingState)].numPeople, NUM_FLOORS)) {
+        floorToGo = floorWithMostAnger(buildingState);
+    }
+    else if (tscore(buildingState, angerSD(buildingState), angerAVG(buildingState),
+                    sumAngerInFloorWithMostAnger(buildingState), numPeopleWaiting(buildingState)) <
+             tscore(buildingState, floorSD(buildingState), floorAVG(buildingState),
+                    buildingState.floors[floorWithMostAnger(buildingState)].numPeople, NUM_FLOORS)) {
+        floorToGo = floorWithMostPeople(buildingState);
+    }
+    else {
+        floorToGo = floorWithMostPeople(buildingState);
+    }
+
     int elevatorToService = chooseElevator(buildingState, floorToGo);
     int elevatorToPickup = chooseElevator(buildingState, floorToGo);
 
-    if (allElevatorsInServcing(buildingState) || 
+    if (allElevatorsInServcing(buildingState) ||
         noPeople(buildingState)) {
         return "";
-    }
-
-    if (buildingState.elevators[elevatorToService].currentFloor != floorToGo) {
-        string serviceString = "e" + 
-                               to_string(elevatorToService) +
-                               "f" + 
-                               to_string(floorWithMostAnger(buildingState));
-        return serviceString;
     }
 
     if (buildingState.floors[buildingState.elevators[elevatorToPickup].currentFloor].numPeople > 0 &&
         buildingState.elevators[elevatorToPickup].currentFloor == floorToGo) {
         string pickupString = "e" +
-                              to_string(elevatorToPickup) +
-                              "p";
+            to_string(elevatorToPickup) +
+            "p";
         return pickupString;
+    }
+
+    if (buildingState.elevators[elevatorToService].currentFloor != floorToGo) {
+        string serviceString = "e" +
+            to_string(elevatorToService) +
+            "f" +
+            to_string(floorToGo);
+        return serviceString;
     }
 
     return "";
